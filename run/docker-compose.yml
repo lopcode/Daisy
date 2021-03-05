@@ -1,0 +1,10 @@
+version: "3"
+services:
+  sqs:
+    image: softwaremill/elasticmq:1.1.0
+    ports:
+      - 9324:9324
+      - 9325:9325
+    volumes:
+      - ./sqs.conf:/opt/elasticmq.conf
+
