@@ -29,6 +29,25 @@ The library will likely eventually be used and proved in production at [Adopt An
 * Try to keep dependency graph lean - if more systems are to be supported, consider subprojects and a BOM
 * Do CI/CD with GitHub Actions
 
+## Running WIP Project
+
+* Open the project in IntelliJ IDEA
+* Start `run/docker-compose.yml`
+* Run `main` in `ApiPlayground.kt`
+* The program will generate 10000 messages, then poll, process, and delete them all
+
+Example output (connecting to real SQS):
+```
+messages.generated{queue=https://sqs.eu-west-2.amazonaws.com/123/test-dlq} throughput=1690/s
+messages.deleted{queue=https://sqs.eu-west-2.amazonaws.com/123/test-queue} throughput=595/s
+messages.deleted{queue=https://sqs.eu-west-2.amazonaws.com/123/test-dlq} throughput=584/s
+messages.polled{queue=https://sqs.eu-west-2.amazonaws.com/123/test-queue} throughput=610/s
+messages.polled{queue=https://sqs.eu-west-2.amazonaws.com/123/test-dlq} throughput=600/s
+messages.processed{queue=https://sqs.eu-west-2.amazonaws.com/123/test-dlq} throughput=584/s
+messages.processed{queue=https://sqs.eu-west-2.amazonaws.com/123/test-queue} throughput=595/s
+messages.processed.total{} throughput=1179/s
+```
+
 ## Copyright
 
 This project is licensed under the Apache License: [LICENSE.txt](LICENSE.txt)
