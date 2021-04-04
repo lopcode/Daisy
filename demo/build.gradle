@@ -2,13 +2,14 @@ import org.gradle.api.tasks.testing.logging.TestLogEvent
 
 plugins {
     id 'org.jetbrains.kotlin.jvm'
+    id 'org.jetbrains.kotlin.plugin.serialization'
     id 'java-library'
     id 'org.jlleitschuh.gradle.ktlint'
     id 'com.github.johnrengelman.shadow'
 }
 
 group 'dev.skye.daisy'
-def projectTitle = 'daisy-ktor'
+def projectTitle = 'daisy-demo'
 project.setProperty('archivesBaseName', projectTitle)
 
 def environmentVersion = System.getenv('VERSION')
@@ -23,7 +24,7 @@ repositories {
 }
 
 dependencies {
-    project(":core")
+    implementation project(":core")
 
     // Kotlin
     implementation platform('org.jetbrains.kotlin:kotlin-bom')
@@ -31,11 +32,13 @@ dependencies {
     implementation 'org.jetbrains.kotlin:kotlin-stdlib-jdk8'
     implementation 'org.jetbrains.kotlinx:kotlinx-coroutines-core'
     implementation 'org.jetbrains.kotlinx:kotlinx-coroutines-jdk8'
+    implementation 'org.jetbrains.kotlinx:kotlinx-serialization-json:1.1.0'
+    implementation 'io.micrometer:micrometer-core:1.6.5'
 
-    // Ktor
-    implementation platform('io.ktor:ktor-bom:1.5.2')
-    implementation 'io.ktor:ktor-server-core'
-    implementation 'io.ktor:ktor-server-cio'
+    // Amazon
+    implementation platform('software.amazon.awssdk:bom:2.16.8')
+    implementation 'software.amazon.awssdk:sqs'
+    implementation 'software.amazon.awssdk:sns'
 
     // Local
     runtime 'org.slf4j:slf4j-simple:1.7.9'
@@ -43,6 +46,7 @@ dependencies {
     // Tests
     testImplementation 'org.jetbrains.kotlin:kotlin-test-junit'
 }
+
 
 compileJava {
     sourceCompatibility = JavaVersion.VERSION_11
@@ -68,7 +72,7 @@ test {
 }
 
 shadowJar {
-    archivesBaseName = "daisy-ktor"
+    archivesBaseName = "daisy-demo"
     archiveClassifier = "all"
     mergeServiceFiles()
     exclude "META-INF/*.DSA"

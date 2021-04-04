@@ -12,4 +12,4 @@ jobs:
         with:
           java-version: '15'
       - name: Run checks
-        run: ./gradlew check --rerun-tasks
+        run: ./gradlew clean check --rerun-tasks

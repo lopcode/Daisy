@@ -10,13 +10,13 @@ The library will likely eventually be used and proved in production at [Adopt An
 
 ## Project goals
 
-* Limit scope to SQS and SNS support to begin with
-* Limit scope to workers deployed as independently scalable processes, paired/deployed with a partner microservice (write vs read separation)
-* Support the consumption of messages using coroutines: https://github.com/Kotlin/kotlinx.coroutines
-* Support message routing and serialization helpers: https://github.com/Kotlin/kotlinx.serialization
+* ✅ Limit scope to SQS and SNS support to begin with
+* ✅ Limit scope to workers deployed as independently scalable processes, paired/deployed with a partner microservice (write vs read separation)
+* ✅ Support the consumption of messages using coroutines: https://github.com/Kotlin/kotlinx.coroutines
+* ✅ Support message routing and serialization helpers: https://github.com/Kotlin/kotlinx.serialization
+* ✅ Support changing message visibility to delay retries
 * Support composition of processors - e.g. applying or removing GZIP compression
 * Support backoff strategies for scaling down processing of messages during slow periods
-* Support changing message visibility to delay retries
 * Support permanently failing the processing of a message, by delivering to a DLQ
 * Gracefully scale to large amounts of messages (don't be the bottleneck)
 * Include documentation, and an example project
@@ -33,7 +33,7 @@ The library will likely eventually be used and proved in production at [Adopt An
 
 * Open the project in IntelliJ IDEA
 * Start `run/docker-compose.yml`
-* Run `main` in `ApiPlayground.kt`
+* Run `main` in `Demo.kt`, in the `demo` subproject
 * The program will generate 10000 messages, then poll, process, and delete them all
 
 Example output (connecting to real SQS):

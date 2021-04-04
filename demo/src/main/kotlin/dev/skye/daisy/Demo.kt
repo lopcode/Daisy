@@ -8,18 +8,27 @@ import io.micrometer.core.instrument.logging.LoggingRegistryConfig
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.runBlocking
+import kotlinx.serialization.Serializable
+import kotlinx.serialization.decodeFromString
+import kotlinx.serialization.json.Json
 import software.amazon.awssdk.auth.credentials.AwsBasicCredentials
 import software.amazon.awssdk.auth.credentials.StaticCredentialsProvider
 import software.amazon.awssdk.services.sqs.SqsAsyncClient
+import software.amazon.awssdk.services.sqs.model.Message
 import java.net.URI
 import java.time.Duration
 
-object ApiPlayground {
+object Demo {
 
     private val endpointUrl = "http://localhost:9324"
     private val queueUrl = "http://localhost:9324/000000000000/test-queue"
     private val dlqUrl = "http://localhost:9324/000000000000/test-dlq"
-    private val credentials = AwsBasicCredentials.create("access key id", "secret key")
+    private val credentials = AwsBasicCredentials.create("access key", "secret key")
+
+    @Serializable
+    data class MessageBody(
+        val message: String
+    )
 
     private val registry = LoggingMeterRegistry(
         object : LoggingRegistryConfig {
@@ -32,14 +41,22 @@ object ApiPlayground {
         Clock.SYSTEM
     )
 
-    val credentialsProvider = StaticCredentialsProvider.create(credentials)
-    val client = SqsAsyncClient.builder()
+    private val credentialsProvider = StaticCredentialsProvider.create(credentials)
+    private val client = SqsAsyncClient.builder()
         .endpointOverride(URI.create(endpointUrl))
         .credentialsProvider(credentialsProvider)
         .build()
-    private val logger = logger<ApiPlayground>()
+    private val logger = logger<Demo>()
 
     @JvmStatic fun main(args: Array<String>) = runBlocking {
+        val demoMessageProcessor = object : MessageProcessing {
+            override suspend fun process(message: Message): PostProcessAction {
+                val messageBody = Json.decodeFromString<MessageBody>(message.body())
+                logger.debug("message ${message.messageId()}: $messageBody")
+                return PostProcessAction.Delete
+            }
+        }
+
         val configuration = DaisyConfiguration(
             queues = listOf(
                 DaisyQueue(
@@ -62,6 +79,13 @@ object ApiPlayground {
             ),
             metrics = DaisyMetricsConfiguration(
                 registry = registry
+            ),
+            routing = DaisyRoutingConfiguration(
+                router = TypePropertyRouter(
+                    processors = mapOf(
+                        MessageGenerator.messageBodyType to demoMessageProcessor
+                    )
+                )
             )
         )
         val daisy = Daisy(configuration)
@@ -74,7 +98,7 @@ object ApiPlayground {
 
         terminateAfter(
             supervisorJob = job,
-            processedCounter = registry.counter("messages.processed")
+            processedCounter = registry.counter("messages.processed.total")
         )
     }
 
@@ -85,17 +109,14 @@ object ApiPlayground {
         processedCounter: Counter
     ) {
         val firstStart = System.currentTimeMillis()
-        var lastProcessed = 0.0
         while (supervisorJob.isActive) {
             val processedMessages = processedCounter.count()
             val now = System.currentTimeMillis()
-            val processedInPeriod = processedMessages - lastProcessed
-            if (processedInPeriod <= threshold && (now - firstStart > minTimeMs)) {
+            if (processedMessages <= threshold && (now - firstStart > minTimeMs)) {
                 logger.info("no more messages to process")
                 supervisorJob.cancel()
                 return
             }
-            lastProcessed = processedMessages
             delay(1000)
         }
     }

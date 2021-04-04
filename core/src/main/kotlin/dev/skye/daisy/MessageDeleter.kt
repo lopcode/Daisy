@@ -6,17 +6,17 @@ import software.amazon.awssdk.core.exception.SdkException
 import software.amazon.awssdk.services.sqs.SqsAsyncClient
 import software.amazon.awssdk.services.sqs.model.DeleteMessageRequest
 
-sealed class DeleteResult {
-    data class Failure(val cause: Throwable) : DeleteResult()
-    object Success : DeleteResult()
+internal sealed class DeleteResult {
+    internal data class Failure(val cause: Throwable) : DeleteResult()
+    internal object Success : DeleteResult()
 }
 
-interface MessageDeleting {
+internal interface MessageDeleting {
 
     suspend fun delete(receiptHandle: String): DeleteResult
 }
 
-class MessageDeleter(
+internal class MessageDeleter(
     private val queueUrl: String,
     private val client: SqsAsyncClient,
     private val counter: Counter
