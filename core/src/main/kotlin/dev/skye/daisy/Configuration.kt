@@ -6,39 +6,45 @@ import kotlinx.coroutines.Dispatchers
 import software.amazon.awssdk.services.sqs.SqsAsyncClient
 import java.time.Duration
 
-data class DaisyQueue(
+public data class DaisyQueue(
     val queueUrl: String,
     val waitTime: Duration,
     val batchSize: Int
 )
 
-data class DaisyProcessorsConfiguration(
+public data class DaisyProcessingConfiguration(
     val quantity: Int,
-    val dispatcher: CoroutineDispatcher = Dispatchers.IO
+    val dispatcher: CoroutineDispatcher
 )
 
-data class DaisyPenaltiesConfiguration(
+public data class DaisyPenaltiesConfiguration(
     val receivePenalty: Duration,
     val exceptionPenalty: Duration
 )
 
-data class DaisyAWSConfiguration(
+public data class DaisyAWSConfiguration(
     val client: SqsAsyncClient
 )
 
-data class DaisyMetricsConfiguration(
+public data class DaisyMetricsConfiguration(
     val registry: MeterRegistry
 )
 
-data class DaisyConfiguration(
-    val queues: List<DaisyQueue>,
-    val processors: DaisyProcessorsConfiguration = DaisyProcessorsConfiguration(
-        quantity = Runtime.getRuntime().availableProcessors()
+public data class DaisyRoutingConfiguration(
+    val router: MessageRouting
+)
+
+public data class DaisyConfiguration(
+    public val queues: List<DaisyQueue>,
+    public val processing: DaisyProcessingConfiguration = DaisyProcessingConfiguration(
+        quantity = Runtime.getRuntime().availableProcessors(),
+        dispatcher = Dispatchers.IO
     ),
-    val penalties: DaisyPenaltiesConfiguration = DaisyPenaltiesConfiguration(
+    public val routing: DaisyRoutingConfiguration,
+    public val penalties: DaisyPenaltiesConfiguration = DaisyPenaltiesConfiguration(
         receivePenalty = Duration.ofSeconds(10),
         exceptionPenalty = Duration.ofSeconds(10)
     ),
-    val aws: DaisyAWSConfiguration,
-    val metrics: DaisyMetricsConfiguration
+    public val aws: DaisyAWSConfiguration,
+    public val metrics: DaisyMetricsConfiguration
 )

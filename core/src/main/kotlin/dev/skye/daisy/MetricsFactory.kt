@@ -13,15 +13,6 @@ internal fun MeterRegistry.makePolledCounter(queue: String): Counter {
     )
 }
 
-internal fun MeterRegistry.makeGeneratedCounter(queue: String): Counter {
-    return this.counter(
-        "messages.generated",
-        listOf(
-            Tag.of("queue", queue)
-        )
-    )
-}
-
 internal fun MeterRegistry.makeProcessedQueueCounter(queue: String): Counter {
     return this.counter(
         "messages.processed",
@@ -40,6 +31,15 @@ internal fun MeterRegistry.makeProcessedTotalCounter(): Counter {
 internal fun MeterRegistry.makeDeletedCounter(queue: String): Counter {
     return this.counter(
         "messages.deleted",
+        listOf(
+            Tag.of("queue", queue)
+        )
+    )
+}
+
+internal fun MeterRegistry.makeDelayedCounter(queue: String): Counter {
+    return this.counter(
+        "messages.delayed",
         listOf(
             Tag.of("queue", queue)
         )

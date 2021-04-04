@@ -7,18 +7,18 @@ import software.amazon.awssdk.services.sqs.SqsAsyncClient
 import software.amazon.awssdk.services.sqs.model.Message
 import software.amazon.awssdk.services.sqs.model.ReceiveMessageRequest
 
-sealed class PollResult {
-    data class Failure(val cause: Throwable) : PollResult()
-    data class Success(val messages: List<Message>) : PollResult()
+internal sealed class PollResult {
+    internal data class Failure(val cause: Throwable) : PollResult()
+    internal data class Success(val messages: List<Message>) : PollResult()
 }
 
-interface QueuePolling {
+internal interface QueuePolling {
 
     val batchSize: Int
     suspend fun poll(): PollResult
 }
 
-class QueuePoller(
+internal class QueuePoller(
     override val batchSize: Int,
     private val queueUrl: String,
     private val waitTimeSeconds: Int,
@@ -32,7 +32,7 @@ class QueuePoller(
         val request = ReceiveMessageRequest.builder()
             .queueUrl(queueUrl)
             .attributeNamesWithStrings("MessageDeduplicationId", "MessageGroupId")
-            .messageAttributeNames("*")
+            .messageAttributeNames(".*")
             .maxNumberOfMessages(batchSize)
             .waitTimeSeconds(waitTimeSeconds)
             .build()

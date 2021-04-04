@@ -12,19 +12,21 @@ import software.amazon.awssdk.services.sqs.model.Message
 import kotlin.coroutines.CoroutineContext
 import kotlin.coroutines.cancellation.CancellationException
 
-class Daisy(
+public class Daisy(
     private val configuration: DaisyConfiguration
 ) {
 
     private data class ProducerSpec(
         val queueUrl: String,
         val poller: QueuePolling,
-        val deleter: MessageDeleting
+        val deleter: MessageDeleting,
+        val delayer: MessageDelaying
     )
 
     private data class Work(
         val message: Message,
         val deleter: MessageDeleting,
+        val delayer: MessageDelaying,
         val processedCounter: Counter,
         val failedCounter: Counter
     )
@@ -32,11 +34,13 @@ class Daisy(
     private val logger = logger<Daisy>()
     private val registry = configuration.metrics.registry
     private val penalties = configuration.penalties
+    private val router = configuration.routing.router
 
-    fun run(): Job {
+    public fun run(): Job {
         val producerSpecs = configuration.queues.map {
             val pollCounter = registry.makePolledCounter(it.queueUrl)
             val deleteCounter = registry.makeDeletedCounter(it.queueUrl)
+            val delayCounter = registry.makeDelayedCounter(it.queueUrl)
             val poller = QueuePoller(
                 queueUrl = it.queueUrl,
                 waitTimeSeconds = it.waitTime.toSeconds().toInt(),
@@ -49,17 +53,23 @@ class Daisy(
                 client = configuration.aws.client,
                 counter = deleteCounter
             )
+            val delayer = MessageDelayer(
+                queueUrl = it.queueUrl,
+                client = configuration.aws.client,
+                counter = delayCounter
+            )
             ProducerSpec(
                 queueUrl = it.queueUrl,
                 poller = poller,
-                deleter = deleter
+                deleter = deleter,
+                delayer = delayer
             )
         }
 
         val supervisorJob = SupervisorJob()
         val scope = object : CoroutineScope {
             override val coroutineContext: CoroutineContext
-                get() = configuration.processors.dispatcher + supervisorJob
+                get() = configuration.processing.dispatcher + supervisorJob
         }
 
         runCoroutines(scope, producerSpecs)
@@ -75,7 +85,7 @@ class Daisy(
         val producers = producerSpecs.map {
             val processedCounter = registry.makeProcessedQueueCounter(it.queueUrl)
             val failedCounter = registry.makeFailedCounter(it.queueUrl)
-            createProducer(scope, it.poller, it.deleter, processedCounter, failedCounter)
+            createProducer(scope, it.poller, it.deleter, it.delayer, processedCounter, failedCounter)
         }
 
         // sampler
@@ -94,7 +104,7 @@ class Daisy(
         // processor pipelines
         val totalProcessedCounter = registry.makeProcessedTotalCounter()
         val processorJobs = scope.loopUntilCancelled(
-            configuration.processors.quantity,
+            configuration.processing.quantity,
             shouldYield = true,
             work = {
                 processWork(primaryChannel, totalProcessedCounter)
@@ -118,16 +128,36 @@ class Daisy(
         totalProcessedCounter: Counter
     ) {
         val work = primaryChannel.receive()
-        logger.debug("received message: ${work.message.messageId()}")
+        logger.debug("routing message: ${work.message.messageId()}")
 
-        // route
-        // process
-        // metrics
-
-        val deleteResult = work.deleter.delete(work.message.receiptHandle())
-        if (deleteResult is DeleteResult.Failure) {
-            logger.warn("message deletion failed", deleteResult.cause)
+        val processor = router.route(work.message)
+        if (processor == null) {
+            logger.warn("no processor registered for message ${work.message.messageId()}")
+            work.failedCounter.increment()
+            return
         }
+
+        when (val action = processor.process(work.message)) {
+            is PostProcessAction.DoNothing -> Unit
+            is PostProcessAction.Delete -> {
+                val deleteResult = work.deleter.delete(
+                    work.message.receiptHandle()
+                )
+                if (deleteResult is DeleteResult.Failure) {
+                    logger.warn("message deletion failed", deleteResult.cause)
+                }
+            }
+            is PostProcessAction.RetryLater -> {
+                val delayResult = work.delayer.delay(
+                    work.message.receiptHandle(),
+                    duration = action.after
+                )
+                if (delayResult is DelayResult.Failure) {
+                    logger.warn("message delay failed", delayResult.cause)
+                }
+            }
+        }
+
         work.processedCounter.increment()
         totalProcessedCounter.increment()
     }
@@ -154,6 +184,7 @@ class Daisy(
         scope: CoroutineScope,
         poller: QueuePolling,
         deleter: MessageDeleting,
+        delayer: MessageDelaying,
         processedCounter: Counter,
         failedCounter: Counter
     ): Producer {
@@ -161,7 +192,7 @@ class Daisy(
         val job = scope.loopUntilCancelled(
             shouldYield = true,
             work = {
-                pollToChannel(poller, deleter, channel, processedCounter, failedCounter)
+                pollToChannel(poller, deleter, delayer, channel, processedCounter, failedCounter)
             },
             onException = {
                 logger.error("error in message receiver", it)
@@ -174,6 +205,7 @@ class Daisy(
     private suspend fun pollToChannel(
         poller: QueuePolling,
         deleter: MessageDeleting,
+        delayer: MessageDelaying,
         channel: Channel<Work>,
         processedCounter: Counter,
         failedCounter: Counter
@@ -191,7 +223,7 @@ class Daisy(
             }
         }
         for (message in messages) {
-            channel.send(Work(message, deleter, processedCounter, failedCounter))
+            channel.send(Work(message, deleter, delayer, processedCounter, failedCounter))
         }
     }
 }

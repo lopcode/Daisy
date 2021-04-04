@@ -8,7 +8,7 @@ import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.yield
 
-fun CoroutineScope.loopUntilCancelled(
+internal fun CoroutineScope.loopUntilCancelled(
     count: Int = 1,
     start: CoroutineStart = CoroutineStart.LAZY,
     shouldYield: Boolean,
@@ -20,7 +20,7 @@ fun CoroutineScope.loopUntilCancelled(
     }
 }
 
-fun CoroutineScope.loopUntilCancelled(
+internal fun CoroutineScope.loopUntilCancelled(
     start: CoroutineStart = CoroutineStart.LAZY,
     shouldYield: Boolean,
     work: suspend () -> Unit,

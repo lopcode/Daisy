@@ -1,2 +1,3 @@
 rootProject.name = 'daisy'
-include('core', 'ktor')
+include('core', 'ktor', 'demo')
+
