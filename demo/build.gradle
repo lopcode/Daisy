@@ -6,11 +6,13 @@ plugins {
     id 'java-library'
     id 'org.jlleitschuh.gradle.ktlint'
     id 'com.github.johnrengelman.shadow'
+    id 'application'
 }
 
 group 'dev.skye.daisy'
 def projectTitle = 'daisy-demo'
 project.setProperty('archivesBaseName', projectTitle)
+mainClassName = 'dev.skye.daisy.Demo'
 
 def environmentVersion = System.getenv('VERSION')
 if (environmentVersion == null || environmentVersion.isBlank()) {

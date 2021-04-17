@@ -1,6 +1,5 @@
 package dev.skye.daisy
 
-import dev.skye.daisy.MessageGenerator.generateMessages
 import dev.skye.daisy.action.PostProcessAction
 import dev.skye.daisy.processor.MessageProcessing
 import dev.skye.daisy.router.TypeAttributeRouter
@@ -15,22 +14,11 @@ import kotlinx.coroutines.runBlocking
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.decodeFromString
 import kotlinx.serialization.json.Json
-import software.amazon.awssdk.auth.credentials.AwsBasicCredentials
-import software.amazon.awssdk.auth.credentials.StaticCredentialsProvider
-import software.amazon.awssdk.services.sqs.SqsAsyncClient
 import software.amazon.awssdk.services.sqs.model.Message
-import java.net.URI
+import software.amazon.awssdk.services.sqs.model.MessageAttributeValue
 import java.time.Duration
 
 object Demo {
-
-    private val endpointUrl = "http://localhost:9324"
-    private val queueUrl = "http://localhost:9324/000000000000/test-queue"
-    private val dlqUrl = "http://localhost:9324/000000000000/test-dlq"
-    private val credentials = AwsBasicCredentials.create(
-        "access key",
-        "secret key"
-    )
 
     @Serializable
     data class MessageBody(
@@ -48,12 +36,8 @@ object Demo {
         Clock.SYSTEM
     )
 
-    private val credentialsProvider = StaticCredentialsProvider.create(credentials)
-    private val client = SqsAsyncClient.builder()
-        .endpointOverride(URI.create(endpointUrl))
-        .credentialsProvider(credentialsProvider)
-        .build()
     private val logger = logger<Demo>()
+    private val client = InfiniteSQSAsyncClient(makeDemoMessage())
 
     @JvmStatic fun main(args: Array<String>) = runBlocking {
         val demoMessageProcessor = object : MessageProcessing {
@@ -65,12 +49,12 @@ object Demo {
         }
 
         val mainQueue = DaisyQueue(
-            queueUrl = queueUrl,
+            queueUrl = "https://test.local/0000/queue-1",
             waitTime = Duration.ofSeconds(20),
             batchSize = 10
         )
         val dlqQueue = DaisyQueue(
-            queueUrl = dlqUrl,
+            queueUrl = "https://test.local/0000/queue-1-dlq",
             waitTime = Duration.ofSeconds(20),
             batchSize = 10
         )
@@ -92,7 +76,7 @@ object Demo {
             routing = DaisyRoutingConfiguration(
                 router = TypeAttributeRouter(
                     processors = mapOf(
-                        MessageGenerator.messageBodyType to demoMessageProcessor
+                        "message_body_type" to demoMessageProcessor
                     )
                 )
             ),
@@ -103,16 +87,32 @@ object Demo {
         )
         val daisy = Daisy(configuration)
 
-        val seedMessageCount = 100_000
-        generateMessages(seedMessageCount, configuration)
-        logger.info("done")
-
+        logger.info("Starting - will continue indefinitely or until messages processed goes to zero...")
         val job = daisy.run()
 
         terminateAfter(
             supervisorJob = job,
             processedCounter = registry.counter("messages.processed.total")
         )
+    }
+
+    private fun makeDemoMessage(): Message {
+        val messageBodyAttribute = MessageAttributeValue.builder()
+            .dataType("String")
+            .stringValue("message_body_type")
+            .build()
+        val messageBody = """
+                { "message": "hello, world!" }
+        """.trimIndent()
+        val message = Message.builder()
+            .messageAttributes(
+                mapOf(
+                    TypeAttributeRouter.DefaultMessageTypeAttributeName to messageBodyAttribute
+                )
+            )
+            .body(messageBody)
+            .build()
+        return message
     }
 
     private suspend fun terminateAfter(
