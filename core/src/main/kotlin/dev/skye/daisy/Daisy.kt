@@ -19,7 +19,7 @@ public class Daisy(
     )
 
     private val logger = logger<Daisy>()
-    private val registry = configuration.metrics.registry
+    private val meterRegistry = configuration.metrics.registry
     private val penalties = configuration.penalties
     private val router = configuration.routing.router
     private val sampler = RandomWorkSampler()
@@ -27,11 +27,17 @@ public class Daisy(
     public fun run(): Job {
         val deleter = MessageDeleter(
             client = configuration.aws.client,
-            meterRegistry = registry
+            meterRegistry = meterRegistry
         )
         val delayer = MessageDelayer(
             client = configuration.aws.client,
-            meterRegistry = registry
+            meterRegistry = meterRegistry
+        )
+        val processor = RoutingWorkProcessor(
+            router = router,
+            deleter = deleter,
+            delayer = delayer,
+            meterRegistry = meterRegistry
         )
 
         val producerSpecs = configuration.queues.map {
@@ -40,7 +46,7 @@ public class Daisy(
                 waitTimeSeconds = it.waitTime.toSeconds().toInt(),
                 batchSize = it.batchSize,
                 client = configuration.aws.client,
-                registry = registry
+                meterRegistry = meterRegistry
             )
             ProducerSpec(
                 queueUrl = it.queueUrl,
@@ -57,8 +63,7 @@ public class Daisy(
         runCoroutines(
             scope,
             producerSpecs,
-            deleter = deleter,
-            delayer = delayer
+            processor
         )
 
         return supervisorJob
@@ -67,23 +72,23 @@ public class Daisy(
     private fun runCoroutines(
         scope: CoroutineScope,
         producerSpecs: List<ProducerSpec>,
-        deleter: MessageDeleting,
-        delayer: MessageDelaying
+        processor: WorkProcessing
     ) {
         // producers
         val producers = producerSpecs.map {
             createProducer(scope, it.poller)
         }
 
-        // sampler
-        val primaryChannel = Channel<Work>()
-        val samplerJob = scope.loopUntilCancelled(
+        // samplers
+        val workChannel = Channel<Work>()
+        val samplerJobs = scope.loopUntilCancelled(
+            count = 1,
             shouldYield = false,
             work = {
                 val work = sampler.sample(
                     inputs = producers.map { it.channel }
                 )
-                primaryChannel.send(work)
+                workChannel.send(work)
             },
             onException = {
                 logger.error("exception in sampler", it)
@@ -93,14 +98,11 @@ public class Daisy(
 
         // processor pipelines
         val processorJobs = scope.loopUntilCancelled(
-            configuration.processing.quantity,
+            count = configuration.processing.quantity,
             shouldYield = true,
             work = {
-                processWork(
-                    primaryChannel,
-                    delayer = delayer,
-                    deleter = deleter
-                )
+                val work = workChannel.receive()
+                processor.process(work)
             },
             onException = {
                 logger.error("exception logged in processor pipeline", it)
@@ -108,60 +110,13 @@ public class Daisy(
             }
         )
 
-        samplerJob.start()
+        samplerJobs
+            .forEach { it.start() }
         processorJobs
             .forEach { it.start() }
         producers
             .map { it.job }
             .forEach { it.start() }
-    }
-
-    private suspend fun processWork(
-        primaryChannel: Channel<Work>,
-        deleter: MessageDeleting,
-        delayer: MessageDelaying
-    ) {
-        val work = primaryChannel.receive()
-        logger.debug("routing message: ${work.message.messageId()}")
-
-        val processor = router.route(work.message)
-        if (processor == null) {
-            logger.warn("no processor registered for message ${work.message.messageId()}")
-            registry
-                .failedCounter(work.queueUrl)
-                .increment()
-            return
-        }
-
-        when (val action = processor.process(work.message)) {
-            is PostProcessAction.DoNothing -> Unit
-            is PostProcessAction.Delete -> {
-                val deleteResult = deleter.delete(
-                    queueUrl = work.queueUrl,
-                    receiptHandle = work.message.receiptHandle()
-                )
-                if (deleteResult is DeleteResult.Failure) {
-                    logger.warn("message deletion failed", deleteResult.cause)
-                }
-            }
-            is PostProcessAction.RetryLater -> {
-                val delayResult = delayer.delay(
-                    queueUrl = work.queueUrl,
-                    receiptHandle = work.message.receiptHandle(),
-                    duration = action.after
-                )
-                if (delayResult is DelayResult.Failure) {
-                    logger.warn("message delay failed", delayResult.cause)
-                }
-            }
-        }
-
-        registry
-            .processedCounter(work.queueUrl)
-            .increment()
-        registry
-            .processedTotalCounter()
-            .increment()
     }
 
     private data class Producer(

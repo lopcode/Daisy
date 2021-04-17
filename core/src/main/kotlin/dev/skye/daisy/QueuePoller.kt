@@ -24,7 +24,7 @@ internal class QueuePoller(
     override val queueUrl: String,
     private val waitTimeSeconds: Int,
     private val client: SqsAsyncClient,
-    private val registry: MeterRegistry
+    private val meterRegistry: MeterRegistry
 ) : QueuePolling {
 
     private val logger = logger<QueuePoller>()
@@ -45,7 +45,7 @@ internal class QueuePoller(
         }
 
         val count = response.messages().size.toDouble()
-        registry
+        meterRegistry
             .polledCounter(queueUrl)
             .increment(count)
         return PollResult.Success(response.messages())
