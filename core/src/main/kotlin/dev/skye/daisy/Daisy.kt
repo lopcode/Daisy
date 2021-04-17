@@ -6,7 +6,6 @@ import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.delay
-import kotlinx.coroutines.selects.selectUnbiased
 import kotlin.coroutines.CoroutineContext
 import kotlin.coroutines.cancellation.CancellationException
 
@@ -23,6 +22,7 @@ public class Daisy(
     private val registry = configuration.metrics.registry
     private val penalties = configuration.penalties
     private val router = configuration.routing.router
+    private val sampler = RandomWorkSampler()
 
     public fun run(): Job {
         val deleter = MessageDeleter(
@@ -80,7 +80,10 @@ public class Daisy(
         val samplerJob = scope.loopUntilCancelled(
             shouldYield = false,
             work = {
-                randomSample(producers, primaryChannel)
+                val work = sampler.sample(
+                    inputs = producers.map { it.channel }
+                )
+                primaryChannel.send(work)
             },
             onException = {
                 logger.error("exception in sampler", it)
@@ -159,20 +162,6 @@ public class Daisy(
         registry
             .processedTotalCounter()
             .increment()
-    }
-
-    private suspend fun randomSample(
-        producers: List<Producer>,
-        channel: Channel<Work>
-    ) {
-        val work = selectUnbiased<Work> {
-            producers
-                .map { it.channel }
-                .map { channel ->
-                    channel.onReceive { it }
-                }
-        }
-        channel.send(work)
     }
 
     private data class Producer(
