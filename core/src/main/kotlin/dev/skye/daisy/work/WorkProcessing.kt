@@ -1,4 +1,4 @@
-package dev.skye.daisy
+package dev.skye.daisy.work
 
 internal interface WorkProcessing {
 

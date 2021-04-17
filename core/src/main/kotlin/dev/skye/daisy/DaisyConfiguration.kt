@@ -1,5 +1,6 @@
 package dev.skye.daisy
 
+import dev.skye.daisy.router.MessageRouting
 import io.micrometer.core.instrument.MeterRegistry
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.Dispatchers

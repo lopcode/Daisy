@@ -1,14 +1,7 @@
-package dev.skye.daisy
+package dev.skye.daisy.work
 
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.selects.selectUnbiased
-
-internal interface WorkSampling {
-
-    suspend fun sample(
-        inputs: List<Channel<Work>>
-    ): Work
-}
 
 internal class RandomWorkSampler : WorkSampling {
 

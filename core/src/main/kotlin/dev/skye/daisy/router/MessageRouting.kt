@@ -1,5 +1,6 @@
-package dev.skye.daisy
+package dev.skye.daisy.router
 
+import dev.skye.daisy.processor.MessageProcessing
 import software.amazon.awssdk.services.sqs.model.Message
 
 public interface MessageRouting {

@@ -1,26 +1,14 @@
-package dev.skye.daisy
+package dev.skye.daisy.action
 
+import dev.skye.daisy.logger
+import dev.skye.daisy.poller.QueuePoller
+import dev.skye.daisy.utility.delayedCounter
 import io.micrometer.core.instrument.MeterRegistry
 import kotlinx.coroutines.future.await
 import software.amazon.awssdk.core.exception.SdkException
 import software.amazon.awssdk.services.sqs.SqsAsyncClient
 import software.amazon.awssdk.services.sqs.model.ChangeMessageVisibilityRequest
 import java.time.Duration
-
-internal sealed class DelayResult {
-
-    data class Failure(val cause: Throwable) : DelayResult()
-    object Success : DelayResult()
-}
-
-internal interface MessageDelaying {
-
-    suspend fun delay(
-        queueUrl: String,
-        receiptHandle: String,
-        duration: Duration
-    ): DelayResult
-}
 
 internal class MessageDelayer(
     private val client: SqsAsyncClient,

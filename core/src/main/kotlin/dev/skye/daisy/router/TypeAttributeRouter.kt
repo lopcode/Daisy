@@ -1,13 +1,15 @@
-package dev.skye.daisy
+package dev.skye.daisy.router
 
+import dev.skye.daisy.logger
+import dev.skye.daisy.processor.MessageProcessing
 import software.amazon.awssdk.services.sqs.model.Message
 
-public class TypePropertyRouter(
+public class TypeAttributeRouter(
     private val messageAttributeName: String = DefaultMessageTypeAttributeName,
     private val processors: Map<String, MessageProcessing>
 ) : MessageRouting {
 
-    private val logger = logger<TypePropertyRouter>()
+    private val logger = logger<TypeAttributeRouter>()
 
     public companion object {
         const val DefaultMessageTypeAttributeName = "daisy_message_type"

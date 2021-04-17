@@ -1,6 +1,9 @@
 package dev.skye.daisy
 
 import dev.skye.daisy.MessageGenerator.generateMessages
+import dev.skye.daisy.action.PostProcessAction
+import dev.skye.daisy.processor.MessageProcessing
+import dev.skye.daisy.router.TypeAttributeRouter
 import io.micrometer.core.instrument.Clock
 import io.micrometer.core.instrument.Counter
 import io.micrometer.core.instrument.logging.LoggingMeterRegistry
@@ -81,7 +84,7 @@ object Demo {
                 registry = registry
             ),
             routing = DaisyRoutingConfiguration(
-                router = TypePropertyRouter(
+                router = TypeAttributeRouter(
                     processors = mapOf(
                         MessageGenerator.messageBodyType to demoMessageProcessor
                     )

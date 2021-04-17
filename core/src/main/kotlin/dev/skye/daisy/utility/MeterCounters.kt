@@ -1,4 +1,4 @@
-package dev.skye.daisy
+package dev.skye.daisy.utility
 
 import io.micrometer.core.instrument.Counter
 import io.micrometer.core.instrument.MeterRegistry

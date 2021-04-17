@@ -1,23 +1,12 @@
-package dev.skye.daisy
+package dev.skye.daisy.poller
 
+import dev.skye.daisy.logger
+import dev.skye.daisy.utility.polledCounter
 import io.micrometer.core.instrument.MeterRegistry
 import kotlinx.coroutines.future.await
 import software.amazon.awssdk.core.exception.SdkException
 import software.amazon.awssdk.services.sqs.SqsAsyncClient
-import software.amazon.awssdk.services.sqs.model.Message
 import software.amazon.awssdk.services.sqs.model.ReceiveMessageRequest
-
-internal sealed class PollResult {
-    internal data class Failure(val cause: Throwable) : PollResult()
-    internal data class Success(val messages: List<Message>) : PollResult()
-}
-
-internal interface QueuePolling {
-
-    val batchSize: Int
-    val queueUrl: String
-    suspend fun poll(): PollResult
-}
 
 internal class QueuePoller(
     override val batchSize: Int,

@@ -1,4 +1,4 @@
-package dev.skye.daisy
+package dev.skye.daisy.work
 
 import software.amazon.awssdk.services.sqs.model.Message
 
