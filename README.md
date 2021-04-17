@@ -29,23 +29,30 @@ The library will likely eventually be used and proved in production at [Adopt An
 * Try to keep dependency graph lean - if more systems are to be supported, consider subprojects and a BOM
 * Do CI/CD with GitHub Actions
 
-## Running WIP Project
+## Running demo project
 
+A demo project is included, to show how to use Daisy, and to prove that it isn't the bottleneck in your message
+processing pipeline.
+
+The program uses a fake SQS client to generate messages when requested, and will run until terminated, or until
+zero messages are processed.
+
+In real-world applications, where HTTP requests are used to perform actions on queues, you'll see much lower
+throughput per instance.
+
+To run the demo project:
 * Open the project in IntelliJ IDEA
-* Start `run/docker-compose.yml`
 * Run `main` in `Demo.kt`, in the `demo` subproject
-* The program will generate 10000 messages, then poll, process, and delete them all
 
-Example output (connecting to real SQS):
+Example output:
 ```
-messages.generated{queue=https://sqs.eu-west-2.amazonaws.com/123/test-dlq} throughput=4060/s
-messages.deleted{queue=https://sqs.eu-west-2.amazonaws.com/123/test-queue} throughput=1261/s
-messages.deleted{queue=https://sqs.eu-west-2.amazonaws.com/123/test-dlq} throughput=1280/s
-messages.polled{queue=https://sqs.eu-west-2.amazonaws.com/123/test-queue} throughput=1330/s
-messages.polled{queue=https://sqs.eu-west-2.amazonaws.com/123/test-dlq} throughput=1261/s
-messages.processed{queue=https://sqs.eu-west-2.amazonaws.com/123/test-dlq} throughput=1299/s
-messages.processed{queue=https://sqs.eu-west-2.amazonaws.com/123/test-queue} throughput=1298/s
-messages.processed.total{} throughput=2560/s
+messages.deleted{queue=https://test.local/0000/queue-1} throughput=130959/s
+messages.deleted{queue=https://test.local/0000/queue-1-dlq} throughput=130760/s
+messages.polled{queue=https://test.local/0000/queue-1-dlq} throughput=130810/s
+messages.polled{queue=https://test.local/0000/queue-1} throughput=131020/s
+messages.processed{queue=https://test.local/0000/queue-1} throughput=130990/s
+messages.processed{queue=https://test.local/0000/queue-1-dlq} throughput=130780/s
+messages.processed.total{} throughput=261771/s
 ```
 
 ## Copyright
