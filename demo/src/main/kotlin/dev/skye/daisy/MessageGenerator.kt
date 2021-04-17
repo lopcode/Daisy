@@ -1,6 +1,6 @@
 package dev.skye.daisy
 
-import dev.skye.daisy.TypePropertyRouter.Companion.DefaultMessageTypeAttributeName
+import dev.skye.daisy.router.TypeAttributeRouter.Companion.DefaultMessageTypeAttributeName
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
