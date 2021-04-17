@@ -8,6 +8,7 @@ import io.micrometer.core.instrument.Clock
 import io.micrometer.core.instrument.Counter
 import io.micrometer.core.instrument.logging.LoggingMeterRegistry
 import io.micrometer.core.instrument.logging.LoggingRegistryConfig
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.runBlocking
@@ -26,7 +27,10 @@ object Demo {
     private val endpointUrl = "http://localhost:9324"
     private val queueUrl = "http://localhost:9324/000000000000/test-queue"
     private val dlqUrl = "http://localhost:9324/000000000000/test-dlq"
-    private val credentials = AwsBasicCredentials.create("access key", "secret key")
+    private val credentials = AwsBasicCredentials.create(
+        "access key",
+        "secret key"
+    )
 
     @Serializable
     data class MessageBody(
@@ -60,19 +64,21 @@ object Demo {
             }
         }
 
+        val mainQueue = DaisyQueue(
+            queueUrl = queueUrl,
+            waitTime = Duration.ofSeconds(20),
+            batchSize = 10
+        )
+        val dlqQueue = DaisyQueue(
+            queueUrl = dlqUrl,
+            waitTime = Duration.ofSeconds(20),
+            batchSize = 10
+        )
+        val availableProcessors = Runtime.getRuntime().availableProcessors()
+        val mainQueues = generateSequence { mainQueue }.take(availableProcessors).toList()
+        val dlqQueues = generateSequence { dlqQueue }.take(availableProcessors).toList()
         val configuration = DaisyConfiguration(
-            queues = listOf(
-                DaisyQueue(
-                    queueUrl = queueUrl,
-                    waitTime = Duration.ofSeconds(20),
-                    batchSize = 10
-                ),
-                DaisyQueue(
-                    queueUrl = dlqUrl,
-                    waitTime = Duration.ofSeconds(20),
-                    batchSize = 10
-                )
-            ),
+            queues = mainQueues + dlqQueues,
             penalties = DaisyPenaltiesConfiguration(
                 receivePenalty = Duration.ofSeconds(5),
                 exceptionPenalty = Duration.ofSeconds(5)
@@ -89,11 +95,15 @@ object Demo {
                         MessageGenerator.messageBodyType to demoMessageProcessor
                     )
                 )
+            ),
+            processing = DaisyProcessingConfiguration(
+                quantity = availableProcessors * 4,
+                dispatcher = Dispatchers.IO
             )
         )
         val daisy = Daisy(configuration)
 
-        val seedMessageCount = 10_000
+        val seedMessageCount = 100_000
         generateMessages(seedMessageCount, configuration)
         logger.info("done")
 

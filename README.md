@@ -38,14 +38,14 @@ The library will likely eventually be used and proved in production at [Adopt An
 
 Example output (connecting to real SQS):
 ```
-messages.generated{queue=https://sqs.eu-west-2.amazonaws.com/123/test-dlq} throughput=1690/s
-messages.deleted{queue=https://sqs.eu-west-2.amazonaws.com/123/test-queue} throughput=595/s
-messages.deleted{queue=https://sqs.eu-west-2.amazonaws.com/123/test-dlq} throughput=584/s
-messages.polled{queue=https://sqs.eu-west-2.amazonaws.com/123/test-queue} throughput=610/s
-messages.polled{queue=https://sqs.eu-west-2.amazonaws.com/123/test-dlq} throughput=600/s
-messages.processed{queue=https://sqs.eu-west-2.amazonaws.com/123/test-dlq} throughput=584/s
-messages.processed{queue=https://sqs.eu-west-2.amazonaws.com/123/test-queue} throughput=595/s
-messages.processed.total{} throughput=1179/s
+messages.generated{queue=https://sqs.eu-west-2.amazonaws.com/123/test-dlq} throughput=4060/s
+messages.deleted{queue=https://sqs.eu-west-2.amazonaws.com/123/test-queue} throughput=1261/s
+messages.deleted{queue=https://sqs.eu-west-2.amazonaws.com/123/test-dlq} throughput=1280/s
+messages.polled{queue=https://sqs.eu-west-2.amazonaws.com/123/test-queue} throughput=1330/s
+messages.polled{queue=https://sqs.eu-west-2.amazonaws.com/123/test-dlq} throughput=1261/s
+messages.processed{queue=https://sqs.eu-west-2.amazonaws.com/123/test-dlq} throughput=1299/s
+messages.processed{queue=https://sqs.eu-west-2.amazonaws.com/123/test-queue} throughput=1298/s
+messages.processed.total{} throughput=2560/s
 ```
 
 ## Copyright
