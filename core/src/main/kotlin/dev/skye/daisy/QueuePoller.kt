@@ -1,6 +1,6 @@
 package dev.skye.daisy
 
-import io.micrometer.core.instrument.Counter
+import io.micrometer.core.instrument.MeterRegistry
 import kotlinx.coroutines.future.await
 import software.amazon.awssdk.core.exception.SdkException
 import software.amazon.awssdk.services.sqs.SqsAsyncClient
@@ -15,15 +15,16 @@ internal sealed class PollResult {
 internal interface QueuePolling {
 
     val batchSize: Int
+    val queueUrl: String
     suspend fun poll(): PollResult
 }
 
 internal class QueuePoller(
     override val batchSize: Int,
-    private val queueUrl: String,
+    override val queueUrl: String,
     private val waitTimeSeconds: Int,
     private val client: SqsAsyncClient,
-    private val counter: Counter
+    private val registry: MeterRegistry
 ) : QueuePolling {
 
     private val logger = logger<QueuePoller>()
@@ -43,7 +44,10 @@ internal class QueuePoller(
             return PollResult.Failure(exception)
         }
 
-        counter.increment(response.messages().size.toDouble())
+        val count = response.messages().size.toDouble()
+        registry
+            .polledCounter(queueUrl)
+            .increment(count)
         return PollResult.Success(response.messages())
     }
 }
