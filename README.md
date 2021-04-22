@@ -15,34 +15,51 @@ The library will likely eventually be used and proved in production at [Adopt An
 * ✅ Support the consumption of messages using coroutines: https://github.com/Kotlin/kotlinx.coroutines
 * ✅ Support message routing and serialization helpers: https://github.com/Kotlin/kotlinx.serialization
 * ✅ Support changing message visibility to delay retries
+* ✅ Gracefully scale to large amounts of messages (don't be the bottleneck)
+* 🟨 Include documentation, and example projects
 * Support composition of processors - e.g. applying or removing GZIP compression
 * Support backoff strategies for scaling down processing of messages during slow periods
 * Support permanently failing the processing of a message, by delivering to a DLQ
-* Gracefully scale to large amounts of messages (don't be the bottleneck)
-* Include documentation, and an example project
 
-### Code goals
-* Keep unit test coverage high (~90%)
-* Integration test using Docker Compose
-* Investigate correctness testing with Lincheck: https://github.com/Kotlin/kotlinx-lincheck
-* Investigate benchmarking tools (also Lincheck/JMH?)
-* Try to keep dependency graph lean - if more systems are to be supported, consider subprojects and a BOM
-* Do CI/CD with GitHub Actions
+## Core
 
-## Running demo project
+The library includes a `core` implementation. For now, the demo projects described below are the best place to find
+usage instructions.
 
-A demo project is included, to show how to use Daisy, and to prove that it isn't the bottleneck in your message
-processing pipeline.
+Before the API stabilises, and the library goes 1.0, this section will be expanded.
 
-The program uses a fake SQS client to generate messages when requested, and will run until terminated, or until
+## Ktor integration
+
+Daisy can be integrated with Ktor, to start and stop message processing as the Ktor application starts and stops.
+
+```kotlin
+import dev.skye.daisy.DaisyFeature
+
+// ...
+
+install(DaisyFeature) {
+    configuration = DaisyConfiguration(
+        // ...
+    )
+}
+```
+
+See the demo projects section below for instructions on how to run the sample Ktor project.
+
+## Demo projects
+
+### Throughput demo
+
+The throughput demo uses a fake SQS client to generate messages when requested, and will run until terminated, or until
 zero messages are processed.
 
-In real-world applications, where HTTP requests are used to perform actions on queues, you'll see much lower
-throughput per instance.
+The throughput is a theoretical maximum, to prove that this library probably isn't the bottleneck in your message
+processing pipeline. In real-world applications, where HTTP requests are used to perform actions on queues, you'll
+likely see much lower throughput.
 
 To run the demo project:
 * Open the project in IntelliJ IDEA
-* Run `main` in `Demo.kt`, in the `demo` subproject
+* Run `main` in `ThroughputDemo.kt`, in the `demo` subproject
 
 Example output:
 ```
@@ -53,6 +70,39 @@ messages.polled{queue=https://test.local/0000/queue-1} throughput=131020/s
 messages.processed{queue=https://test.local/0000/queue-1} throughput=130990/s
 messages.processed{queue=https://test.local/0000/queue-1-dlq} throughput=130780/s
 messages.processed.total{} throughput=261771/s
+```
+
+### Ktor demo
+
+See `KtorDemo.kt` in the `demo` subproject for an example of how to integrate. The demo includes a server that starts on
+port 8080, and includes Prometheus metrics. The supplied dummy SQS implementation produces a low number of messages,
+to generate some metrics.
+
+Example application output:
+```
+[DefaultDispatcher-worker-1] INFO ktor.application - Autoreload is disabled because the development mode is off.
+[DefaultDispatcher-worker-1] INFO ktor.application - Responding at http://0.0.0.0:8080
+[DefaultDispatcher-worker-1] INFO ktor.application - Daisy starting...
+[DefaultDispatcher-worker-9] INFO dev.skye.daisy.DaisyFeature - received message 8b3f1fba-3a32-4987-bbfb-8c3bed4a5d1f: MessageBody(message=hello, world!)
+[DefaultDispatcher-worker-5] INFO dev.skye.daisy.DaisyFeature - received message c5b1f675-527d-4649-bd45-e90a05ed0e89: MessageBody(message=hello, world!)
+```
+
+Example metrics output:
+
+```
+➜ http localhost:8080/metrics | grep messages
+# HELP messages_polled_total  
+# TYPE messages_polled_total counter
+messages_polled_total{queue="https://test.local/0000/queue-1",} 640.0
+messages_polled_total{queue="https://test.local/0000/queue-1-dlq",} 630.0
+# HELP messages_deleted_total  
+# TYPE messages_deleted_total counter
+messages_deleted_total{queue="https://test.local/0000/queue-1",} 640.0
+messages_deleted_total{queue="https://test.local/0000/queue-1-dlq",} 630.0
+# HELP messages_processed_total  
+# TYPE messages_processed_total counter
+messages_processed_total{queue="https://test.local/0000/queue-1",} 640.0
+messages_processed_total{queue="https://test.local/0000/queue-1-dlq",} 630.0
 ```
 
 ## Copyright

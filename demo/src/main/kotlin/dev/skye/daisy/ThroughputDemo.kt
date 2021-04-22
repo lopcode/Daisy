@@ -18,7 +18,7 @@ import software.amazon.awssdk.services.sqs.model.Message
 import software.amazon.awssdk.services.sqs.model.MessageAttributeValue
 import java.time.Duration
 
-object Demo {
+object ThroughputDemo {
 
     @Serializable
     data class MessageBody(
@@ -36,7 +36,7 @@ object Demo {
         Clock.SYSTEM
     )
 
-    private val logger = logger<Demo>()
+    private val logger = logger<ThroughputDemo>()
     private val client = InfiniteSQSAsyncClient(makeDemoMessage())
 
     @JvmStatic fun main(args: Array<String>) = runBlocking {

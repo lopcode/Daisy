@@ -6,13 +6,15 @@ import software.amazon.awssdk.services.sqs.model.DeleteMessageResponse
 import software.amazon.awssdk.services.sqs.model.Message
 import software.amazon.awssdk.services.sqs.model.ReceiveMessageRequest
 import software.amazon.awssdk.services.sqs.model.ReceiveMessageResponse
+import java.time.Duration
 import java.util.UUID
 import java.util.concurrent.CompletableFuture
 import java.util.concurrent.ExecutorService
 import java.util.concurrent.Executors
 
-class InfiniteSQSAsyncClient(
+internal class InfiniteSQSAsyncClient(
     private val messageTemplate: Message,
+    private val sleepDuration: Duration = Duration.ZERO,
     private val executorService: ExecutorService = Executors.newFixedThreadPool(Runtime.getRuntime().availableProcessors())
 ) : SqsAsyncClient {
 
@@ -28,11 +30,15 @@ class InfiniteSQSAsyncClient(
                 val messages = generateSequence {
                     messageTemplate.toBuilder()
                         .receiptHandle(UUID.randomUUID().toString())
+                        .messageId(UUID.randomUUID().toString())
                         .build()
                 }.take(batchSize).toList()
                 val response = ReceiveMessageResponse.builder()
                     .messages(messages)
                     .build()
+                if (!sleepDuration.isZero) {
+                    Thread.sleep(sleepDuration.toMillis())
+                }
                 return@supplyAsync response
             },
             executorService
