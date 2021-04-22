@@ -27,6 +27,7 @@ repositories {
 
 dependencies {
     implementation project(":core")
+    implementation project(":ktor")
 
     // Kotlin
     implementation platform('org.jetbrains.kotlin:kotlin-bom')
@@ -35,7 +36,15 @@ dependencies {
     implementation 'org.jetbrains.kotlinx:kotlinx-coroutines-core'
     implementation 'org.jetbrains.kotlinx:kotlinx-coroutines-jdk8'
     implementation 'org.jetbrains.kotlinx:kotlinx-serialization-json:1.1.0'
+
+    // Metrics
     implementation 'io.micrometer:micrometer-core:1.6.5'
+    implementation "io.micrometer:micrometer-registry-prometheus:1.6.6"
+
+    // Ktor
+    implementation platform('io.ktor:ktor-bom:1.5.2')
+    implementation 'io.ktor:ktor-server-cio'
+    implementation 'io.ktor:ktor-metrics-micrometer'
 
     // Amazon
     implementation platform('software.amazon.awssdk:bom:2.16.8')

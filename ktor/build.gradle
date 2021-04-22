@@ -23,7 +23,7 @@ repositories {
 }
 
 dependencies {
-    project(":core")
+    implementation project(":core")
 
     // Kotlin
     implementation platform('org.jetbrains.kotlin:kotlin-bom')
@@ -35,13 +35,14 @@ dependencies {
     // Ktor
     implementation platform('io.ktor:ktor-bom:1.5.2')
     implementation 'io.ktor:ktor-server-core'
-    implementation 'io.ktor:ktor-server-cio'
-
-    // Local
-    runtime 'org.slf4j:slf4j-simple:1.7.9'
 
     // Tests
     testImplementation 'org.jetbrains.kotlin:kotlin-test-junit'
+    testImplementation 'io.ktor:ktor-server-test-host'
+    testImplementation 'io.micrometer:micrometer-core:1.6.5'
+    testImplementation platform('software.amazon.awssdk:bom:2.16.8')
+    testImplementation 'software.amazon.awssdk:sqs'
+    testImplementation 'software.amazon.awssdk:sns'
 }
 
 compileJava {
