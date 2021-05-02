@@ -3,6 +3,7 @@ package dev.skye.daisy
 import dev.skye.daisy.action.PostProcessAction
 import dev.skye.daisy.processor.MessageProcessing
 import dev.skye.daisy.router.TypeAttributeRouter
+import dev.skye.daisy.utility.NoopMeterRegistry
 import io.ktor.application.Application
 import io.ktor.application.ApplicationStarted
 import io.ktor.application.call
@@ -12,7 +13,6 @@ import io.ktor.response.respond
 import io.ktor.routing.get
 import io.ktor.routing.routing
 import io.ktor.server.testing.withTestApplication
-import io.micrometer.core.instrument.simple.SimpleMeterRegistry
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.yield
@@ -56,20 +56,15 @@ class DaisyFeatureTests {
         val configuration = DaisyConfiguration(
             queues = listOf(
                 DaisyQueue(
-                    queueUrl = "test",
-                    waitTime = Duration.ofSeconds(20),
-                    batchSize = 1
+                    url = "test",
+                    waitDuration = Duration.ofSeconds(20),
+                    batchSize = 1,
+                    emptyPollPenalty = PenaltyConfiguration.NoPenalty
                 )
             ),
-            routing = DaisyRoutingConfiguration(
-                router = router
-            ),
-            aws = DaisyAWSConfiguration(
-                client = sqsClient
-            ),
-            metrics = DaisyMetricsConfiguration(
-                registry = SimpleMeterRegistry()
-            )
+            router = router,
+            awsClient = sqsClient,
+            meterRegistry = NoopMeterRegistry()
         )
 
         val startTimeMs = System.currentTimeMillis()

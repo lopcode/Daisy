@@ -33,7 +33,7 @@ dependencies {
     implementation 'org.jetbrains.kotlinx:kotlinx-coroutines-jdk8'
 
     // Ktor
-    implementation platform('io.ktor:ktor-bom:1.5.2')
+    implementation platform('io.ktor:ktor-bom:1.5.4')
     implementation 'io.ktor:ktor-server-core'
 
     // Tests

@@ -21,7 +21,7 @@ internal class QueuePoller(
     override suspend fun poll(): PollResult {
         val request = ReceiveMessageRequest.builder()
             .queueUrl(queueUrl)
-            .attributeNamesWithStrings("MessageDeduplicationId", "MessageGroupId")
+            .attributeNamesWithStrings("All")
             .messageAttributeNames(".*")
             .maxNumberOfMessages(batchSize)
             .waitTimeSeconds(waitTimeSeconds)

@@ -43,30 +43,24 @@ internal fun main() {
         }
     }
     val mainQueue = DaisyQueue(
-        queueUrl = "https://test.local/0000/queue-1",
-        waitTime = Duration.ofSeconds(20),
-        batchSize = 1
+        url = "https://test.local/0000/queue-1",
+        waitDuration = Duration.ofSeconds(20),
+        batchSize = 1,
+        emptyPollPenalty = PenaltyConfiguration.NoPenalty
     )
     val dlqQueue = DaisyQueue(
-        queueUrl = "https://test.local/0000/queue-1-dlq",
-        waitTime = Duration.ofSeconds(20),
-        batchSize = 1
+        url = "https://test.local/0000/queue-1-dlq",
+        waitDuration = Duration.ofSeconds(20),
+        batchSize = 1,
+        emptyPollPenalty = PenaltyConfiguration.NoPenalty
     )
-    val mainQueues = listOf(mainQueue)
-    val dlqQueues = listOf(dlqQueue)
     val configuration = DaisyConfiguration(
-        queues = mainQueues + dlqQueues,
-        aws = DaisyAWSConfiguration(
-            client = client
-        ),
-        metrics = DaisyMetricsConfiguration(
-            registry = registry
-        ),
-        routing = DaisyRoutingConfiguration(
-            router = TypeAttributeRouter(
-                processors = mapOf(
-                    "message_body_type" to demoMessageProcessor
-                )
+        queues = listOf(mainQueue, dlqQueue),
+        awsClient = client,
+        meterRegistry = registry,
+        router = TypeAttributeRouter(
+            processors = mapOf(
+                "message_body_type" to demoMessageProcessor
             )
         ),
         processing = DaisyProcessingConfiguration(
