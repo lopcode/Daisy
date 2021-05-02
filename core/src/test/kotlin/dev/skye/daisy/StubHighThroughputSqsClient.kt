@@ -7,7 +7,7 @@ import software.amazon.awssdk.services.sqs.model.ReceiveMessageResponse
 import java.util.concurrent.CompletableFuture
 import java.util.concurrent.ConcurrentLinkedQueue
 
-class StubbedSqsClient(
+class StubHighThroughputSqsClient(
     messages: List<Message>
 ) : SqsAsyncClient {
 
@@ -19,12 +19,11 @@ class StubbedSqsClient(
     override fun receiveMessage(
         receiveMessageRequest: ReceiveMessageRequest
     ): CompletableFuture<ReceiveMessageResponse> {
-        val message = messages.poll()
-            ?: return CompletableFuture.failedFuture(
-                RuntimeException("no more stubbed messages")
-            )
+        val messages = messages.poll()?.let {
+            listOf(it)
+        } ?: listOf()
         val response = ReceiveMessageResponse.builder()
-            .messages(message)
+            .messages(messages)
             .build()
         return CompletableFuture.completedFuture(response)
     }

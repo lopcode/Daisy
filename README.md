@@ -16,9 +16,9 @@ The library will likely eventually be used and proved in production at [Adopt An
 * ✅ Support message routing and serialization helpers: https://github.com/Kotlin/kotlinx.serialization
 * ✅ Support changing message visibility to delay retries
 * ✅ Gracefully scale to large amounts of messages (don't be the bottleneck)
+* ✅ Support backoff strategies for scaling down processing of messages during slow periods
 * 🟨 Include documentation, and example projects
 * Support composition of processors - e.g. applying or removing GZIP compression
-* Support backoff strategies for scaling down processing of messages during slow periods
 * Support permanently failing the processing of a message, by delivering to a DLQ
 
 ## Core

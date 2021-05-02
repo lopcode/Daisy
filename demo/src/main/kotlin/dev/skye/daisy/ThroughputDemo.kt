@@ -48,36 +48,36 @@ object ThroughputDemo {
             }
         }
 
+        val availableProcessors = Runtime.getRuntime().availableProcessors()
         val mainQueue = DaisyQueue(
-            queueUrl = "https://test.local/0000/queue-1",
-            waitTime = Duration.ofSeconds(20),
-            batchSize = 10
+            url = "https://test.local/0000/queue-1",
+            waitDuration = Duration.ofSeconds(20),
+            batchSize = 10,
+            emptyPollPenalty = PenaltyConfiguration.BackoffDelay(
+                maxDuration = Duration.ofSeconds(10)
+            ),
+            pollerCount = availableProcessors
         )
         val dlqQueue = DaisyQueue(
-            queueUrl = "https://test.local/0000/queue-1-dlq",
-            waitTime = Duration.ofSeconds(20),
-            batchSize = 10
+            url = "https://test.local/0000/queue-1-dlq",
+            waitDuration = Duration.ofSeconds(20),
+            batchSize = 10,
+            emptyPollPenalty = PenaltyConfiguration.BackoffDelay(
+                maxDuration = Duration.ofSeconds(10)
+            ),
+            pollerCount = availableProcessors
         )
-        val availableProcessors = Runtime.getRuntime().availableProcessors()
-        val mainQueues = generateSequence { mainQueue }.take(availableProcessors).toList()
-        val dlqQueues = generateSequence { dlqQueue }.take(availableProcessors).toList()
         val configuration = DaisyConfiguration(
-            queues = mainQueues + dlqQueues,
+            queues = listOf(mainQueue, dlqQueue),
             penalties = DaisyPenaltiesConfiguration(
-                receivePenalty = Duration.ofSeconds(5),
-                exceptionPenalty = Duration.ofSeconds(5)
+                pollException = PenaltyConfiguration.BackoffDelay(maxDuration = Duration.ofSeconds(10)),
+                processingException = PenaltyConfiguration.BackoffDelay(maxDuration = Duration.ofSeconds(10)),
             ),
-            aws = DaisyAWSConfiguration(
-                client = client
-            ),
-            metrics = DaisyMetricsConfiguration(
-                registry = registry
-            ),
-            routing = DaisyRoutingConfiguration(
-                router = TypeAttributeRouter(
-                    processors = mapOf(
-                        "message_body_type" to demoMessageProcessor
-                    )
+            awsClient = client,
+            meterRegistry = registry,
+            router = TypeAttributeRouter(
+                processors = mapOf(
+                    "message_body_type" to demoMessageProcessor
                 )
             ),
             processing = DaisyProcessingConfiguration(

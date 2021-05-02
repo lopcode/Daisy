@@ -52,7 +52,7 @@ dependencies {
     implementation 'software.amazon.awssdk:sns'
 
     // Local
-    runtime 'org.slf4j:slf4j-simple:1.7.9'
+    runtimeOnly 'org.slf4j:slf4j-simple:1.7.9'
 
     // Tests
     testImplementation 'org.jetbrains.kotlin:kotlin-test-junit'
