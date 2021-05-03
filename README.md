@@ -1,12 +1,16 @@
 # Daisy 🌼
 
-Daisy is a work-in-progress project to formalise some Kotlin inter-service messaging primitives that I've written a few times for different projects.
+Daisy is a coroutine based message processing library, for Kotlin backend services. It removes a lot of messaging-related
+boilerplate, and can scale up to meet your throughput needs.
 
-Producing and consuming messages in distributed or eventually consistent systems can be tricky, and must be built on fast, reliable, and tested foundations.
+It supports the basics, like message routing based on attributes, and message deletion after processing. More advanced features
+are also made easy - such as exponential backoff, and message delaying, to save you money during slow periods.
 
-Kotlin, its standard library, and extension libraries (for coroutines and serialization) offer some excellent tools for server-side development, so we use those as the basis for the library.
+Most parts of Daisy are configurable, but the defaults are good enough for production use, and will help you build
+a fast and reliable message processor; without repeating yourself across services.
 
-The library will likely eventually be used and proved in production at [Adopt Animals](https://www.adopt.app), but it is developed independently of anything else, including Kale Charity and my employer.
+The library is used and proved in production at [Adopt Animals](https://www.adopt.app), but it is developed independently
+of anything else, including Kale Charity and my employer.
 
 ## Project goals
 
@@ -23,10 +27,37 @@ The library will likely eventually be used and proved in production at [Adopt An
 
 ## Core
 
-The library includes a `core` implementation. For now, the demo projects described below are the best place to find
-usage instructions.
+The library includes a `core` implementation. For now, the [demo](https://github.com/CarrotCodes/Daisy/tree/main/demo/src/main/kotlin/dev/skye/daisy)
+projects described below are the best place to find examples of usage.
 
 Before the API stabilises, and the library goes 1.0, this section will be expanded.
+
+The first prerelease version `0.0.1` is published to Maven Central. You can use it with Gradle, for example:
+
+```groovy
+plugins {
+    id 'org.jetbrains.kotlin.jvm' version '1.4.32'
+}
+
+repositories {
+    mavenCentral()
+}
+
+dependencies {
+    implementation "dev.skye.daisy:daisy-core:0.0.1"
+    
+    // Kotlin
+    implementation platform("org.jetbrains.kotlin:kotlin-bom")
+    implementation platform("org.jetbrains.kotlinx:kotlinx-coroutines-bom:1.4.2")
+    implementation "org.jetbrains.kotlin:kotlin-stdlib-jdk8"
+    implementation "org.jetbrains.kotlinx:kotlinx-coroutines-core"
+    implementation "org.jetbrains.kotlinx:kotlinx-coroutines-jdk8"
+    
+    // AWS
+    implementation platform("software.amazon.awssdk:bom:2.16.8")
+    implementation "software.amazon.awssdk:sqs"
+}
+```
 
 ## Ktor integration
 
@@ -50,12 +81,15 @@ See the demo projects section below for instructions on how to run the sample Kt
 
 ### Throughput demo
 
-The throughput demo uses a fake SQS client to generate messages when requested, and will run until terminated, or until
-zero messages are processed.
+The throughput demo uses an in-memory SQS implementation to generate messages when requested, and will run until
+terminated, or until zero messages are processed.
 
-The throughput is a theoretical maximum, to prove that this library probably isn't the bottleneck in your message
-processing pipeline. In real-world applications, where HTTP requests are used to perform actions on queues, you'll
-likely see much lower throughput.
+The demo shows a theoretical maximum for your machine, to prove that this library probably isn't the bottleneck in your
+message processing pipeline. The example output is from my laptop (a 16" MacBook Pro), but in this demo, Daisy scales to
+millions of messages on more powerful computers.
+
+In real-world applications, where HTTP requests are used to perform actions on queues, you'll likely see much lower
+throughput.
 
 To run the demo project:
 * Open the project in IntelliJ IDEA
