@@ -32,14 +32,12 @@ dependencies {
     implementation 'org.jetbrains.kotlinx:kotlinx-coroutines-jdk8'
     implementation 'org.jetbrains.kotlinx:kotlinx-serialization-json:1.1.0'
     implementation 'io.micrometer:micrometer-core:1.6.5'
+    implementation 'org.slf4j:slf4j-api:1.7.30'
 
     // Amazon
     implementation platform('software.amazon.awssdk:bom:2.16.8')
     implementation 'software.amazon.awssdk:sqs'
     implementation 'software.amazon.awssdk:sns'
-
-    // Local
-    runtimeOnly 'org.slf4j:slf4j-simple:1.7.9'
 
     // Tests
     testImplementation 'org.jetbrains.kotlin:kotlin-test-junit'
