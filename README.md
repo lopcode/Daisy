@@ -45,17 +45,20 @@ repositories {
 
 dependencies {
     implementation "dev.skye.daisy:daisy-core:0.0.2"
-    
+
     // Kotlin
     implementation platform("org.jetbrains.kotlin:kotlin-bom")
     implementation platform("org.jetbrains.kotlinx:kotlinx-coroutines-bom:1.4.2")
     implementation "org.jetbrains.kotlin:kotlin-stdlib-jdk8"
     implementation "org.jetbrains.kotlinx:kotlinx-coroutines-core"
     implementation "org.jetbrains.kotlinx:kotlinx-coroutines-jdk8"
-    
+
     // AWS
     implementation platform("software.amazon.awssdk:bom:2.16.8")
     implementation "software.amazon.awssdk:sqs"
+
+    // Metrics
+    implementation "io.micrometer:micrometer-core:1.6.5"
 }
 ```
 
