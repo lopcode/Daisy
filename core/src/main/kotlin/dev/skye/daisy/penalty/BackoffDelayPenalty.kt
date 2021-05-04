@@ -8,22 +8,24 @@ import kotlin.math.pow
 // Maximum supported duration is 1 hour
 internal class BackoffDelayPenalty(
     maxDuration: Duration,
-    step: Duration = Duration.ofMillis(100),
+    step: Duration = Duration.ofMillis(1000),
     private val delayer: suspend (Long) -> Unit = { durationMs -> delay(durationMs) }
 ) : PenaltyStrategy {
 
     private val counter = AtomicInteger(0)
+    private val maxCounter = 22
     private val maxDurationMs = maxDuration
         .coerceAtMost(Duration.ofHours(1))
         .toMillis()
     private val stepMs = step.toMillis()
 
-    override suspend fun applyPenalty() {
-        val multiplier = 2.toDouble().pow(counter.get())
-            .coerceIn(1.0, Long.MAX_VALUE.toDouble())
+    override suspend fun applyAndIncrement() {
+        val counter = counter.get().coerceAtMost(maxCounter)
+        val multiplier = 2.toDouble().pow(counter)
+            .coerceAtLeast(1.0)
             .toLong()
         val computedDurationMs = stepMs * multiplier
-        val durationMs = java.lang.Long.min(computedDurationMs, maxDurationMs)
+        val durationMs = computedDurationMs.coerceAtMost(maxDurationMs)
 
         increaseCounter()
         delayer(durationMs)
@@ -31,10 +33,8 @@ internal class BackoffDelayPenalty(
 
     private fun increaseCounter() {
         val counterValue = counter.incrementAndGet()
-        // If the counter runs forever, eventually it will wrap around
-        // In that case, reset the penalty
-        if (counterValue < 0) {
-            reset()
+        if (counterValue > maxCounter) {
+            counter.set(maxCounter)
         }
     }
 

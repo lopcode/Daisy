@@ -10,7 +10,8 @@ import java.util.concurrent.CompletableFuture
 import java.util.concurrent.ConcurrentHashMap
 
 class StubDeletingSqsClient(
-    messages: List<Message>
+    messages: List<Message>,
+    private val removeWhenSeen: Boolean = false
 ) : SqsAsyncClient {
 
     private val receiptHandles = ConcurrentHashMap.newKeySet<String>().apply {
@@ -27,6 +28,9 @@ class StubDeletingSqsClient(
         val randomMessageKey = receiptHandles.randomOrNull()
         val message = randomMessageKey?.let {
             messages[it]!!
+        }
+        if (removeWhenSeen) {
+            receiptHandles.remove(randomMessageKey)
         }
         val messages = message?.let {
             listOf(it)

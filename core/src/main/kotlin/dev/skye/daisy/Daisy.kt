@@ -177,7 +177,7 @@ public class Daisy(
         }
 
         if (messages.isEmpty()) {
-            spec.emptyPollPenalty.applyPenalty()
+            spec.emptyPollPenalty.applyAndIncrement()
         } else {
             spec.emptyPollPenalty.reset()
         }

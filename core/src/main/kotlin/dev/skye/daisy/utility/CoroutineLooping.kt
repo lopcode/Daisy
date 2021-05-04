@@ -52,7 +52,7 @@ internal fun CoroutineScope.loopUntilCancelled(
                 return@launch
             } catch (exception: Exception) {
                 onException(exception)
-                failurePenalty.applyPenalty()
+                failurePenalty.applyAndIncrement()
             }
             if (shouldYield) {
                 yield()

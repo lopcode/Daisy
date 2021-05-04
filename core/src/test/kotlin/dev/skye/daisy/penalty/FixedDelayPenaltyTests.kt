@@ -19,7 +19,7 @@ class FixedDelayPenaltyTests {
             delayer = stubDelayer
         )
         expectedDelays.forEach { _ ->
-            sut.applyPenalty()
+            sut.applyAndIncrement()
         }
 
         assertEquals(expectedDelays, recordedDelays)
@@ -40,7 +40,7 @@ class FixedDelayPenaltyTests {
             if (index == 1) {
                 sut.reset()
             }
-            sut.applyPenalty()
+            sut.applyAndIncrement()
         }
 
         assertEquals(expectedDelays, recordedDelays)
