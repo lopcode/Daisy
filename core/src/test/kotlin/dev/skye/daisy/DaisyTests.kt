@@ -39,6 +39,63 @@ class DaisyTests {
     }
 
     @Test
+    fun `single message is processed once`() = runBlocking {
+        val receivedReceipts = ConcurrentHashMap.newKeySet<String>()
+        val receiptCounter = AtomicInteger(0)
+        val processor = object : MessageProcessing {
+            override suspend fun process(message: Message): PostProcessAction {
+                val receiptHandle = message.receiptHandle()
+                if (receivedReceipts.contains(receiptHandle)) {
+                    fail("message already ackowledged $receiptHandle")
+                }
+                receivedReceipts.add(receiptHandle)
+                receiptCounter.incrementAndGet()
+                return PostProcessAction.Delete
+            }
+        }
+        val router = TypeAttributeRouter(
+            messageAttributeName = "test_type_attribute",
+            processors = mapOf(
+                "test" to processor
+            )
+        )
+        val messageHandle = UUID.randomUUID().toString()
+        val messages = makeMessage(messageHandle)
+        val sqsClient = StubDeletingSqsClient(
+            listOf(messages),
+            removeWhenSeen = true
+        )
+        val configuration = makeTestConfiguration(
+            router,
+            sqsClient,
+            processing = DaisyProcessingConfiguration(
+                quantity = 1,
+                dispatcher = Dispatchers.IO
+            )
+        )
+        val daisy = Daisy(configuration)
+
+        job = daisy.run()
+
+        val startTimeMs = System.currentTimeMillis()
+        val startTime = Instant.ofEpochMilli(startTimeMs)
+        val maxSeconds = 5
+
+        while (true) {
+            if (receivedReceipts.size >= 1) {
+                assertEquals(receivedReceipts, setOf(messageHandle))
+
+                return@runBlocking
+            }
+
+            if (Duration.between(Instant.now(), startTime).seconds > maxSeconds) {
+                fail("failed to process message in $maxSeconds seconds - processed ${receivedReceipts.size}")
+            }
+            delay(100)
+        }
+    }
+
+    @Test
     fun `large number of messages are processed and acknowledged correctly`() = runBlocking {
         val messageCount = 100_000
         val receivedReceipts = ConcurrentHashMap.newKeySet<String>()
@@ -195,7 +252,7 @@ class DaisyTests {
         verify(
             processorPenalty,
             timeout(2000).times(expectedThrows)
-        ).applyPenalty()
+        ).applyAndIncrement()
     }
 
     @Test
@@ -230,7 +287,7 @@ class DaisyTests {
         verify(
             pollPenalty,
             timeout(2000).atLeastOnce()
-        ).applyPenalty()
+        ).applyAndIncrement()
     }
 
     @Test
@@ -271,7 +328,7 @@ class DaisyTests {
         verify(
             emptyPenalty,
             timeout(2000).atLeastOnce()
-        ).applyPenalty()
+        ).applyAndIncrement()
     }
 
     @Test

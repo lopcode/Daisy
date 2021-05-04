@@ -20,7 +20,7 @@ class BackoffDelayPenaltyTests {
             delayer = stubDelayer
         )
         expectedDelays.forEach { _ ->
-            sut.applyPenalty()
+            sut.applyAndIncrement()
         }
 
         assertEquals(expectedDelays, recordedDelays)
@@ -42,7 +42,7 @@ class BackoffDelayPenaltyTests {
             if (index == 3) {
                 sut.reset()
             }
-            sut.applyPenalty()
+            sut.applyAndIncrement()
         }
 
         assertEquals(expectedDelays, recordedDelays)

@@ -8,7 +8,7 @@ internal class FixedDelayPenalty(
     private val delayer: suspend (Long) -> Unit = { durationMs -> delay(durationMs) }
 ) : PenaltyStrategy {
 
-    override suspend fun applyPenalty() {
+    override suspend fun applyAndIncrement() {
         if (duration == Duration.ZERO) {
             return
         }

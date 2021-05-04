@@ -4,7 +4,7 @@ import dev.skye.daisy.PenaltyConfiguration
 
 public interface PenaltyStrategy {
 
-    suspend fun applyPenalty()
+    suspend fun applyAndIncrement()
     fun reset()
 }
 
