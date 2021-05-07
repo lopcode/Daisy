@@ -32,7 +32,9 @@ projects described below are the best place to find examples of usage.
 
 Before the API stabilises, and the library goes 1.0, this section will be expanded.
 
-The first prerelease version `0.0.2` is published to Maven Central. You can use it with Gradle, for example:
+The first prerelease versions are published to Maven Central: `dev.skye.daisy:daisy-core:0.0.3`
+
+You can use it with Gradle, for example:
 
 ```groovy
 plugins {
@@ -44,7 +46,7 @@ repositories {
 }
 
 dependencies {
-    implementation "dev.skye.daisy:daisy-core:0.0.2"
+    implementation "dev.skye.daisy:daisy-core:0.0.3"
 
     // Kotlin
     implementation platform("org.jetbrains.kotlin:kotlin-bom")
