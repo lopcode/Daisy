@@ -32,13 +32,13 @@ projects described below are the best place to find examples of usage.
 
 Before the API stabilises, and the library goes 1.0, this section will be expanded.
 
-The first prerelease versions are published to Maven Central: `dev.skye.daisy:daisy-core:0.0.3`
+The first prerelease versions are published to Maven Central: `dev.skye.daisy:daisy-core:0.0.4`
 
 You can use it with Gradle, for example:
 
 ```groovy
 plugins {
-    id 'org.jetbrains.kotlin.jvm' version '1.5.20'
+    id 'org.jetbrains.kotlin.jvm' version '1.5.10'
 }
 
 repositories {
@@ -67,6 +67,8 @@ dependencies {
 ## Ktor integration
 
 Daisy can be integrated with Ktor, to start and stop message processing as the Ktor application starts and stops.
+
+The first prerelease versions are published to Maven Central: `dev.skye.daisy:daisy-ktor:0.0.4`
 
 ```kotlin
 import dev.skye.daisy.DaisyFeature
