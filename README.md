@@ -38,7 +38,7 @@ You can use it with Gradle, for example:
 
 ```groovy
 plugins {
-    id 'org.jetbrains.kotlin.jvm' version '1.4.32'
+    id 'org.jetbrains.kotlin.jvm' version '1.5.20'
 }
 
 repositories {
@@ -50,7 +50,7 @@ dependencies {
 
     // Kotlin
     implementation platform("org.jetbrains.kotlin:kotlin-bom")
-    implementation platform("org.jetbrains.kotlinx:kotlinx-coroutines-bom:1.4.2")
+    implementation platform("org.jetbrains.kotlinx:kotlinx-coroutines-bom:1.5.0")
     implementation "org.jetbrains.kotlin:kotlin-stdlib-jdk8"
     implementation "org.jetbrains.kotlinx:kotlinx-coroutines-core"
     implementation "org.jetbrains.kotlinx:kotlinx-coroutines-jdk8"

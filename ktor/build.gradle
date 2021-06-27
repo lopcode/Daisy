@@ -27,13 +27,13 @@ dependencies {
 
     // Kotlin
     implementation platform('org.jetbrains.kotlin:kotlin-bom')
-    implementation platform('org.jetbrains.kotlinx:kotlinx-coroutines-bom:1.4.2')
+    implementation platform('org.jetbrains.kotlinx:kotlinx-coroutines-bom:1.5.0')
     implementation 'org.jetbrains.kotlin:kotlin-stdlib-jdk8'
     implementation 'org.jetbrains.kotlinx:kotlinx-coroutines-core'
     implementation 'org.jetbrains.kotlinx:kotlinx-coroutines-jdk8'
 
     // Ktor
-    implementation platform('io.ktor:ktor-bom:1.5.4')
+    implementation platform('io.ktor:ktor-bom:1.6.0')
     implementation 'io.ktor:ktor-server-core'
 
     // Tests
