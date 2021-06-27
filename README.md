@@ -46,7 +46,7 @@ repositories {
 }
 
 dependencies {
-    implementation "dev.skye.daisy:daisy-core:0.0.3"
+    implementation "dev.skye.daisy:daisy-core:0.0.4"
 
     // Kotlin
     implementation platform("org.jetbrains.kotlin:kotlin-bom")
